@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMI Calculator</title>
+    <style>
+        /* General Body Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Changed to flex-start to prevent content going off screen on large tables */
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Container for the Calculator */
+        .calculator-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            max-width: 900px; /* Increased max-width to accommodate wider tables */
+            width: 100%;
+            margin-top: 20px; /* Added margin-top to give some space from the top */
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        /* Input Group Styles */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .input-group input[type="number"] {
+            width: calc(100% - 20px); /* Account for padding */
+            padding: 12px 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input[type="number"]:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+
+        /* Button Styles */
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Results Display Styles */
+        .results-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            display: none; /* Hidden by default until calculated */
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            color: #444;
+        }
+
+        .result-item span:first-child {
+            font-weight: 600;
+        }
+
+        .result-item span:last-child {
+            color: #007bff;
+            font-weight: 700;
+            font-size: 1.2em;
+        }
+
+        /* Loan Schedule Table Styles */
+        .schedule-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            display: none; /* Hidden by default until calculated */
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .schedule-section h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .table-container {
+            overflow-x: auto; /* Enables horizontal scrolling on small screens */
+            max-height: 500px; /* Max height for the table body */
+            overflow-y: auto; /* Enables vertical scrolling for table body */
+            border: 1px solid #e0e0e0; /* Add border to container */
+            border-radius: 8px;
+        }
+
+        .loan-schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px; /* Ensure table is wide enough even on small screens */
+        }
+
+        .loan-schedule-table th,
+        .loan-schedule-table td {
+            padding: 12px 15px;
+            text-align: right; /* Align numbers to the right */
+            border-bottom: 1px solid #e9ecef;
+            white-space: nowrap; /* Prevent wrapping for numbers */
+        }
+
+        .loan-schedule-table th:first-child,
+        .loan-schedule-table td:first-child {
+            text-align: left; /* Align month/year to the left */
+        }
+
+
+        .loan-schedule-table thead th {
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: 700;
+            position: sticky; /* Make header sticky */
+            top: 0;
+            z-index: 1;
+        }
+
+        .loan-schedule-table tbody tr:nth-child(even) {
+            background-color: #fdfdfd;
+        }
+
+        .loan-schedule-table tbody tr:hover {
+            background-color: #eaf6ff;
+        }
+
+        /* Error Message */
+        #errorMessage {
+            color: #dc3545;
+            text-align: center;
+            margin-top: 15px;
+            font-weight: 600;
+            display: none;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .calculator-container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.7em;
+            }
+
+            .input-group input[type="number"],
+            button {
+                font-size: 1em;
+                padding: 10px;
+            }
+
+            .loan-schedule-table th,
+            .loan-schedule-table td {
+                padding: 8px 10px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calculator-container">
+        <h1>EMI Calculator</h1>
+
+        <div class="input-group">
+            <label for="loanAmount">Loan Amount (₹)</label>
+            <input type="number" id="loanAmount" value="1000000" min="1" step="1000" placeholder="e.g., 1000000">
+        </div>
+
+        <div class="input-group">
+            <label for="interestRate">Annual Interest Rate (%)</label>
+            <input type="number" id="interestRate" value="8.5" min="0.01" step="0.01" placeholder="e.g., 8.5">
+        </div>
+
+        <div class="input-group">
+            <label for="loanTenure">Loan Tenure (Years)</label>
+            <input type="number" id="loanTenure" value="20" min="1" step="1" placeholder="e.g., 20">
+        </div>
+
+        <button onclick="calculateEMI()">Calculate EMI</button>
+
+        <p id="errorMessage" style="color: red; text-align: center; margin-top: 10px;"></p>
+
+        <div class="results-section" id="resultsSection">
+            <div class="result-item">
+                <span>Monthly EMI</span>
+                <span id="monthlyEMI">₹ 0.00</span>
+            </div>
+            <div class="result-item">
+                <span>Total Interest Payable</span>
+                <span id="totalInterest">₹ 0.00</span>
+            </div>
+            <div class="result-item">
+                <span>Total Amount Payable</span>
+                <span id="totalPayable">₹ 0.00</span>
+            </div>
+        </div>
+
+        <div class="schedule-section" id="scheduleSection">
+            <h2>Loan Amortization Schedule</h2>
+            <div class="table-container">
+                <table class="loan-schedule-table">
+                    <thead>
+                        <tr>
+                            <th>Month / Year</th>
+                            <th>EMI (₹)</th>
+                            <th>Principal (₹)</th>
+                            <th>Interest (₹)</th>
+                            <th>Balance (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="loanScheduleBody">
+                        <!-- Schedule rows will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculateEMI() {
+            const loanAmountInput = document.getElementById('loanAmount');
+            const interestRateInput = document.getElementById('interestRate');
+            const loanTenureInput = document.getElementById('loanTenure');
+
+            const monthlyEMIOutput = document.getElementById('monthlyEMI');
+            const totalInterestOutput = document.getElementById('totalInterest');
+            const totalPayableOutput = document.getElementById('totalPayable');
+            const loanScheduleBody = document.getElementById('loanScheduleBody');
+            const resultsSection = document.getElementById('resultsSection');
+            const scheduleSection = document.getElementById('scheduleSection');
+            const errorMessage = document.getElementById('errorMessage');
+
+            // Reset previous results and error
+            monthlyEMIOutput.textContent = '₹ 0.00';
+            totalInterestOutput.textContent = '₹ 0.00';
+            totalPayableOutput.textContent = '₹ 0.00';
+            loanScheduleBody.innerHTML = '';
+            resultsSection.style.display = 'none';
+            scheduleSection.style.display = 'none';
+            errorMessage.style.display = 'none';
+
+            const loanAmount = parseFloat(loanAmountInput.value);
+            const annualInterestRate = parseFloat(interestRateInput.value);
+            const loanTenureYears = parseInt(loanTenureInput.value);
+
+            // Input validation
+            if (isNaN(loanAmount) || loanAmount <= 0) {
+                errorMessage.textContent = 'Please enter a valid Loan Amount.';
+                errorMessage.style.display = 'block';
+                return;
+            }
+            if (isNaN(annualInterestRate) || annualInterestRate < 0) {
+                errorMessage.textContent = 'Please enter a valid Interest Rate (0 or greater).';
+                errorMessage.style.display = 'block';
+                return;
+            }
+            if (isNaN(loanTenureYears) || loanTenureYears <= 0) {
+                errorMessage.textContent = 'Please enter a valid Loan Tenure (1 year or more).';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            const monthlyInterestRate = annualInterestRate / 12 / 100; // R = annualInterestRate / 12 / 100
+            const numberOfMonths = loanTenureYears * 12; // N = loanTenureYears * 12
+
+            let emi;
+            if (monthlyInterestRate === 0) {
+                // If interest rate is 0, EMI is simply loanAmount / numberOfMonths
+                emi = loanAmount / numberOfMonths;
+            } else {
+                // EMI formula: P * R * (1 + R)^N / ((1 + R)^N - 1)
+                const powerFactor = Math.pow(1 + monthlyInterestRate, numberOfMonths);
+                emi = loanAmount * monthlyInterestRate * powerFactor / (powerFactor - 1);
+            }
+
+            const totalPayable = emi * numberOfMonths;
+            const totalInterest = totalPayable - loanAmount;
+
+            // Display Results
+            monthlyEMIOutput.textContent = `₹ ${emi.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            totalInterestOutput.textContent = `₹ ${totalInterest.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            totalPayableOutput.textContent = `₹ ${totalPayable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+            resultsSection.style.display = 'block';
+            scheduleSection.style.display = 'block';
+
+            // Generate Amortization Schedule
+            let balance = loanAmount;
+            const startDate = new Date(); // Start from current date for month/year calculation
+
+            for (let i = 1; i <= numberOfMonths; i++) {
+                let interestPaid;
+                if (monthlyInterestRate === 0) {
+                    interestPaid = 0;
+                } else {
+                    interestPaid = balance * monthlyInterestRate;
+                }
+
+                let principalPaid = emi - interestPaid;
+
+                // Adjust for the last payment to ensure balance becomes exactly zero
+                if (i === numberOfMonths) {
+                    principalPaid = balance; // The last principal payment should be the remaining balance
+                    emi = principalPaid + interestPaid; // Adjust EMI for the last payment if needed
+                } else if (balance - principalPaid < 0) {
+                    // This handles potential floating point inaccuracies where principalPaid might overshoot slightly
+                    principalPaid = balance;
+                }
+
+                balance -= principalPaid;
+
+                // Ensure balance doesn't go negative due to minor floating point errors
+                if (balance < 0.01 && balance > -0.01) { // Check if balance is very close to zero
+                    balance = 0;
+                } else if (balance < 0) {
+                    balance = 0; // Should not happen with the above adjustment but as a safeguard
+                }
+
+
+                // Calculate month and year for the schedule
+                const currentMonthDate = new Date(startDate);
+                currentMonthDate.setMonth(startDate.getMonth() + i); // Add 'i' months to the start date
+                const monthYear = `${currentMonthDate.toLocaleString('en-US', { month: 'short' })} ${currentMonthDate.getFullYear()}`;
+
+                const row = loanScheduleBody.insertRow();
+                row.insertCell().textContent = monthYear;
+                row.insertCell().textContent = emi.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                row.insertCell().textContent = principalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                row.insertCell().textContent = interestPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                row.insertCell().textContent = balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            // Scroll to the results section after calculation
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Call calculateEMI on page load to show initial values
+        document.addEventListener('DOMContentLoaded', calculateEMI);
+    </script>
+</body>
+</html>
